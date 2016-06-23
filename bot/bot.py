@@ -13,6 +13,7 @@ STREAMING_LOGFILE = 'streaming.log'
 
 
 class InvalidTweetException(Exception):
+    """Raised when a tweet should not result in a star transaction."""
     pass
 
 
@@ -48,7 +49,6 @@ class TweetHandler():
         """Save stars to the database and tweet the responses."""
         responses = []
         recipients = self.get_recipients()
-        print(self.tweet['user']['screen_name'])
         if self.tweet['user']['screen_name'] in [rec['screen_name'] for rec in recipients]:
             text = ("@{} I'm sorry, {}. "
                     "I'm afraid I can't do that.".format(

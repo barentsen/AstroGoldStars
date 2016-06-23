@@ -20,6 +20,7 @@ def test_recipients():
 
 
 def test_responses():
+    """Test the response for a standard tweet."""
     handler = bot.TweetHandler(EXAMPLE_TWEET, dbfile=TESTDB, dry_run=True)
     responses = handler.handle()
     assert len(responses) == 1  # only 1 star handed out
