@@ -1,6 +1,6 @@
 # AstroGoldStars bot
 
-***Because random acts of kindness are missing from our community**
+***Because random acts of kindness are too rare in our community***
 
 ***Solves credit sharing in science.***
 
