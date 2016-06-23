@@ -53,6 +53,15 @@ class GoldStarDB():
         #print('Inserted {} row(s).'.format(cur.rowcount))
         self.con.commit()
 
+    def delete_star(self, status_id, recipient_id):
+        """Remove a star from the database."""
+        cur = self.con.execute("""
+                                   DELETE FROM transactions
+                                   WHERE status_id = ?
+                                   AND recipient_id = ?;
+                                """, [status_id, recipient_id]).fetchone()
+        self.con.commit()
+
     def count_stars(self, user_id):
         stars = self.con.execute(
                                 """

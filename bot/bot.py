@@ -1,4 +1,6 @@
 import json
+import re
+
 from twython import Twython
 from twython import TwythonStreamer
 
@@ -27,6 +29,7 @@ class TweetHandler():
         self.dry_run = dry_run
 
     def validate(self, tweet):
+        """Do not allow non-status, retweets, or the bot's own tweets."""
         if 'text' not in tweet:
             raise InvalidTweetException('{} does not look like a status.'.format(tweet['id']))
         if 'retweeted_status' in tweet:
@@ -45,16 +48,26 @@ class TweetHandler():
                 recipients.append(mention)
         return recipients  # unique recipients only
 
+    def handle_hide(self):
+        re.findall('@AstroGoldStars\W+hide\W+(\d+)', '@AstroGoldStaRs hiDe 3039445', re.IGNORECASE)
+
     def handle(self):
         """Save stars to the database and tweet the responses."""
         responses = []
         recipients = self.get_recipients()
+        # Allow a star to be hidden by tweeting '@TWITTERHANDLE hide statusid'
+        if re.findall('^\W*@' + TWITTERHANDLE + '\W+hide\W+(\d+)', self.tweet['text'], re.IGNORECASE):
+            self.db.delete_star(self.tweet['id'], self.tweet['user']['id'])
+            text = '@{} Ok, no problem.'.format(self.tweet['user']['screen_name'])
+            self.post_tweet(status=text)
+            return [text]
+        # Do not allow a user to give a star to self
         if self.tweet['user']['screen_name'] in [rec['screen_name'] for rec in recipients]:
             text = ("@{} I'm sorry, {}. "
                     "I'm afraid I can't do that.".format(
                         self.tweet['user']['screen_name'],
                         self.tweet['user']['name'].split(' ')[0]))
-            self.post_tweet(status=text, in_reply_to_status_id=self.tweet['id'])
+            self.post_tweet(status=text)
             return [text]
         for recipient in recipients:
             # Save the transaction in the db
@@ -71,14 +84,14 @@ class TweetHandler():
                             self.db.count_stars(recipient['id']),
                             url))
             responses.append(text)
-            self.post_tweet(status=text, in_reply_to_status_id=self.tweet['id'])
+            self.post_tweet(status=text)
         return responses
 
-    def post_tweet(self, status, in_reply_to_status_id):
+    def post_tweet(self, status):
         if not self.dry_run:
             twitter = Twython(APP_KEY, APP_SECRET, OAUTH_TOKEN, OAUTH_TOKEN_SECRET)
             result = twitter.update_status(status=status,
-                                           in_reply_to_status_id=in_reply_to_status_id)
+                                           in_reply_to_status_id=self.tweet['id'])
             with open(LOGFILE, 'a') as log:
                 log.write(json.dumps(result))
             return twitter, result
